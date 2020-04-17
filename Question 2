@@ -1,0 +1,59 @@
+void *print(void* data)
+{
+ 
+        myStruct *d = (myStruct *)data;
+        pthread_mutex_lock(&(d->mutex_b ));
+        pthread_mutex_lock(&(d->mutex_a ));
+        pthread_mutex_destroy(&d->mutex_a);
+ 
+        printf("buffer = %s\n", d->buffer);
+ 
+        pthread_mutex_unlock(&(d->mutex_b ));
+        pthread_mutex_destroy(&d->mutex_b);
+ 
+        pthread_mutex_lock(&(d->mutex_c ));
+        printf("exiting from child...\n");
+        exit(EXIT_SUCCESS);
+}
+ 
+int main(void)
+{
+        myStruct data;
+        pthread_t thread;
+        char c = ' ';
+ 
+        pthread_mutex_init(&data.mutex_a, NULL);
+        pthread_mutex_init(&data.mutex_b, NULL);
+        pthread_mutex_init(&data.mutex_c, NULL);
+ 
+        pthread_mutex_lock(&data.mutex_a);
+        pthread_mutex_lock(&data.mutex_c);
+ 
+        pthread_create(&thread, NULL, print, (void*)(&data));
+ 
+        fgets(data.buffer, sizeof(data.buffer), stdin);
+ 
+        pthread_mutex_unlock(&data.mutex_a);
+        pthread_mutex_lock(&data.mutex_b);
+ 
+        printf("press enter...\n");
+ 
+        c = getch();
+ 
+        if(c == 10)
+        {
+                printf("you pressed enter\n");
+                pthread_mutex_unlock(&data.mutex_c);
+                pthread_mutex_destroy(&data.mutex_c);
+ 
+        }
+        else
+        {
+                printf("next time press enter when prompted!\nnow exiting\n");
+                exit(EXIT_FAILURE);
+        }
+ 
+        pthread_join(thread, NULL);
+ 
+}
+
